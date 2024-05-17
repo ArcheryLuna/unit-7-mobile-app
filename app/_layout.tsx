@@ -1,6 +1,6 @@
 import { View, StyleSheet, Text, Appearance } from 'react-native';
 import React from 'react';
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 
 const RootLayout = () => {
 
@@ -9,7 +9,12 @@ const RootLayout = () => {
     console.log(ColorScheme);
 
     return (
-        <Slot />
+        <Stack screenOptions={{
+            headerShown: false
+        }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="level/[slug]" />
+        </Stack>
     )
 }
 

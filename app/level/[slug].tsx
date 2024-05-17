@@ -18,7 +18,7 @@ import levelTwoQuestions from '../../data/level-two/questions';
 import levelThreeQuestions from '../../data/level-three/questions';
 
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faArrowRight } from '@fortawesome/pro-regular-svg-icons';
+import { faArrowLeft, faArrowRight, faRightLongToLine } from '@fortawesome/pro-regular-svg-icons';
 
 const LevelSlug = () => {
     const { slug } = useLocalSearchParams();
@@ -177,20 +177,20 @@ const LevelSlug = () => {
             );
         } else if (current.questionType === 3) {
             return (
-                <View className="absolute bottom-64">
+                <View className="absolute ios:bottom-80 android:bottom-64 flex-1 flex-row gap-1">
                     <TextInput
                         value={selectedAnswer}
                         onChangeText={(text) => setSelectedAnswer(text)}
-                        className="bg-gray-800 text-white p-2 rounded-lg"
+                        className="bg-gray-800 text-white p-2 rounded-lg w-48"
                         keyboardType="numeric"
                         placeholder='Enter your answer here...'
                         placeholderTextColor={selectedAnswer === '' ? 'gray' : 'white'}
                     />
                     <Pressable
-                        className="bg-black mt-6 px-6 py-4 border w-full border-white rounded-lg"
+                        className="bg-black mt-6 px-6 py-4 border w-4 border-white rounded-lg"
                         onPress={() => handleCheckAnswer(selectedAnswer)}
                     >
-                        <Text className="text-white text-center">Submit</Text>
+                        <Text className="text-white text-center ios:-ml-2 ios:mt-1"><FontAwesomeIcon icon={faRightLongToLine} color="#fff" /></Text>
                     </Pressable>
                 </View>
             );
@@ -255,7 +255,7 @@ const LevelSlug = () => {
             <StyledText className="text-right absolute top-[95px] right-[25px]">Question {Math.min(currentQuestion + 1, levelQuestions.length)} of {levelQuestions.length}</StyledText>
             <StyledText className="text-left absolute top-[95px] left-[25px]">Correct Answers: {correctAnswers}</StyledText>
             <View className="absolute top-[180px]">
-                <Text className="text-3xl font-semibold">
+                <Text className="text-3xl px-6 font-semibold">
                     {levelQuestions[currentQuestion]?.questionName}
                 </Text>
             </View>
