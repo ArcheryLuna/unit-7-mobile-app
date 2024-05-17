@@ -34,7 +34,7 @@ const RootLayout = () => {
                 <View className={(CompletedLevels.includes(1) ? "bg-blue-300" : "bg-stone-200") +" absolute top-[225px] left-[224px] w-4 h-4 rounded-full text-center"}>
                 </View>
                 <Pressable 
-                    className={( CompletedLevels.includes(1) ? "bg-blue-300" : "bg-gray-300") + " absolute top-[255px] right-[51] w-24 h-24 text-center rounded-full"}
+                    className={( CompletedLevels.includes(1) ? "bg-blue-500" : "bg-gray-300") + " absolute top-[255px] right-[51] w-24 h-24 text-center rounded-full"}
                     onPress={() => {
                         if ( CompletedLevels.includes(1) ) {
                             router.push("/level/2")

@@ -1,6 +1,6 @@
-import { useLocalSearchParams, Link, Redirect, Stack, router } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { Text, View, Pressable, TextInput } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Question } from '../../types';
 import { styled } from 'nativewind';
 
@@ -9,11 +9,10 @@ const StyledText = styled(Text);
 
 import LevelOneFailedRepo from '../../data/level-one/failed-questions.json';
 import LevelTwoFailedRepo from '../../data/level-two/failed-questions.json';
-import LevelThreeFailedRepo from '../../data/level-three/failed-questions.json'
+import LevelThreeFailedRepo from '../../data/level-three/failed-questions.json';
 
-import CompletedLevels from '../../data/completed-levels.json'
+import CompletedLevels from '../../data/completed-levels.json';
 
-// question imports
 import levelOneQuestions from '../../data/level-one/questions';
 import levelTwoQuestions from '../../data/level-two/questions';
 import levelThreeQuestions from '../../data/level-three/questions';
@@ -24,17 +23,20 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/pro-regular-svg-icons';
 const LevelSlug = () => {
     const { slug } = useLocalSearchParams();
     const [loading, setLoading] = useState(true);
-    
+
     const [levelQuestions, setLevelQuestions] = useState<Question[]>([]);
     const [wrongQuestions, setWrongQuestions] = useState<Question[]>([]);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [correctAnswers, setCorrectAnswers] = useState(0);
     const [hasTimer, setHasTimer] = useState(false);
-    const [timer, setTimer] = useState(0);
 
+    const questionTimerRef = useRef(0);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
     const [currentLevel, setCurrentLevel] = useState(1);
 
     const [selectedAnswer, setSelectedAnswer] = useState('');
+
+    const [dummyState, setDummyState] = useState(0); // Dummy state to force re-render for the timer display
 
     useEffect(() => {
         switch (slug) {
@@ -66,37 +68,46 @@ const LevelSlug = () => {
         setLoading(false);
     }, [slug]);
 
-    function Loading() {
-        return (
-            <View className="flex-1 items-center justify-center gap-2 text-white">
-                <Text>Loading...</Text>
-            </View>
-        );
-    }
+    const handleTimeout = useCallback(() => {
+        setWrongQuestions((prev) => [...prev, levelQuestions[currentQuestion]]);
+        setCurrentQuestion((prev) => prev + 1);
+    }, [currentQuestion, levelQuestions]);
 
-    function handleCheckAnswer(answer: string) {
-        const current = levelQuestions[currentQuestion];
-        if (current.questionType === 1 || current.questionType === 2) {
-            if (parseInt(answer) === current.questionAnswer) {
-                setCurrentQuestion(currentQuestion + 1);
-                setCorrectAnswers(correctAnswers + 1);
-            } else {
-                setWrongQuestions([...wrongQuestions, current]);
-                setCurrentQuestion(currentQuestion + 1);
+    useEffect(() => {
+        if (hasTimer && currentQuestion < levelQuestions.length) {
+            questionTimerRef.current = 0;
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
             }
-        } else if (current.questionType === 3) {
-            if ((answer === "True" && current.questionAnswer === 1) || (answer === "False" && current.questionAnswer === 0)) {
-                setCurrentQuestion(currentQuestion + 1);
-                setCorrectAnswers(correctAnswers + 1);
-            } else {
-                setWrongQuestions([...wrongQuestions, current]);
-                setCurrentQuestion(currentQuestion + 1);
-            }
+            timerRef.current = setInterval(() => {
+                questionTimerRef.current += 1;
+                setDummyState((prev) => prev + 1); // Trigger re-render for the timer display
+                if (questionTimerRef.current >= (slug === '2' ? 20 : 10)) {
+                    handleTimeout();
+                    questionTimerRef.current = 0;
+                }
+            }, 1000);
+
+            return () => {
+                if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                }
+            };
         }
-        setSelectedAnswer('');
-    }
+    }, [hasTimer, slug, currentQuestion, handleTimeout]);
 
-    function InputMethod() {
+    const HasTimer = useCallback(() => {
+        if (hasTimer && currentQuestion < levelQuestions.length) {
+            return (
+                <StyledText className="text-center">
+                    Time Remaining: {(slug === '2' ? 20 : 10) - questionTimerRef.current}
+                </StyledText>
+            );
+        }
+        return null;
+    }, [hasTimer, currentQuestion, slug]);
+
+    const InputMethod = useCallback(() => {
         if (currentQuestion >= levelQuestions.length) {
             if (slug === 'unlimitedPractice') {
                 setCurrentQuestion(0);
@@ -107,34 +118,37 @@ const LevelSlug = () => {
             } else if (currentLevel === 2) {
                 LevelTwoFailedRepo.push(...wrongQuestions);
             } else if (currentLevel === 3) {
-                LevelThreeFailedRepo.push(...wrongQuestions);
+                
             }
 
             CompletedLevels.push(currentLevel);
 
-            return <StyledView className="flex-1  justify-center place-items-center">
-                <StyledText className="text-3xl  text-center">You have completed the level!</StyledText>
-                <StyledText className=" text-center">You got {correctAnswers} out of {levelQuestions.length} questions correct!</StyledText>
-                <StyledView className="absolute flex-1 flex-row gap-4 bottom-24">
-                    <Pressable
-                        className="bg-black px-2 py-1 border border-white rounded-lg"
-                        onPress={() => {
-                            router.push(`/level/${currentLevel + 1}`);
-                        }}
-                    >
-                        <Text className="text-white">Next Level <FontAwesomeIcon icon={faArrowRight} color={"#fff"} /> </Text>
-                    </Pressable>
-                    <Pressable
-                        className="bg-black px-2 py-1 border border-white rounded-lg"
-                        onPress={() => {
-                            router.push(`/`);
-                        }}
-                    >
-                        <Text className="text-white"><FontAwesomeIcon icon={faArrowLeft} color={"#fff"} /> Go Back</Text>
-                    </Pressable>
-
+            return (
+                <StyledView className="flex-1 justify-center place-items-center">
+                    <StyledText className="text-3xl text-center">You have completed the level!</StyledText>
+                    <StyledText className="text-center">You got {correctAnswers} out of {levelQuestions.length} questions correct!</StyledText>
+                    <StyledView className="absolute flex-1 flex-row gap-4 right-12 left-12 bottom-24">
+                        {currentLevel >= 3 ? null : (
+                            <Pressable
+                                className="bg-black px-2 py-1 border border-white rounded-lg"
+                                onPress={() => {
+                                    router.push(`/level/${currentLevel + 1}`);
+                                }}
+                            >
+                                <Text className="text-white">Next Level <FontAwesomeIcon icon={faArrowRight} color={"#fff"} /></Text>
+                            </Pressable>
+                        )}
+                        <Pressable
+                            className="bg-black px-2 py-1 border border-white rounded-lg"
+                            onPress={() => {
+                                router.push(`/`);
+                            }}
+                        >
+                            <Text className="text-white"><FontAwesomeIcon icon={faArrowLeft} color={"#fff"} /> Go Back</Text>
+                        </Pressable>
+                    </StyledView>
                 </StyledView>
-            </StyledView>;
+            );
         }
 
         const current = levelQuestions[currentQuestion];
@@ -166,7 +180,7 @@ const LevelSlug = () => {
                 <View className="absolute bottom-64">
                     <TextInput
                         value={selectedAnswer}
-                        onChangeText={setSelectedAnswer}
+                        onChangeText={(text) => setSelectedAnswer(text)}
                         className="bg-gray-800 text-white p-2 rounded-lg"
                         keyboardType="numeric"
                         placeholder='Enter your answer here...'
@@ -200,17 +214,52 @@ const LevelSlug = () => {
                 </View>
             );
         }
+    }, [currentQuestion, levelQuestions, selectedAnswer, correctAnswers, wrongQuestions, currentLevel]);
+
+    function handleCheckAnswer(answer: string) {
+        const current = levelQuestions[currentQuestion];
+        if (current.questionType === 1 || current.questionType === 3) {
+            if (answer == current.questionAnswer.toString()) {
+                setCorrectAnswers((prev) => prev + 1);
+            } else {
+                setWrongQuestions((prev) => [...prev, current]);
+            }
+            setCurrentQuestion((prev) => prev + 1);
+        } else if (current.questionType === 2) {
+            if ((answer.toLowerCase() == "True".toLowerCase() && current.questionAnswer == 1) || (answer.toLowerCase() == "False".toLowerCase() && current.questionAnswer === 0)) {
+                setCorrectAnswers((prev) => prev + 1);
+            } else {
+                setWrongQuestions((prev) => [...prev, current]);
+            }
+            setCurrentQuestion((prev) => prev + 1);
+        }
+        setSelectedAnswer('');
+    }
+
+    function Loading() {
+            return (
+                <StyledView className="flex-1 items-center justify-center">
+                    <StyledText>Loading...</StyledText>
+                </StyledView>
+            );
     }
 
     return (
         loading ? <Loading /> :
         <View className="flex-1 items-center justify-center gap-2 text-white">
-            <View className="absolute top-[140px]">
+            <Pressable onPress={() => router.push("/")} className="absolute px-4 py-2 bg-black rounded-lg border border-gray-200 top-12 left-6">
+                <Text className="text-white"><FontAwesomeIcon icon={faArrowLeft} color="#fff" /> Go Back</Text>
+            </Pressable>
+            <HasTimer />
+            <StyledText className="text-3xl text-center absolute top-[120px]">Level {slug}</StyledText>
+            <StyledText className="text-right absolute top-[95px] right-[25px]">Question {Math.min(currentQuestion + 1, levelQuestions.length)} of {levelQuestions.length}</StyledText>
+            <StyledText className="text-left absolute top-[95px] left-[25px]">Correct Answers: {correctAnswers}</StyledText>
+            <View className="absolute top-[180px]">
                 <Text className="text-3xl font-semibold">
                     {levelQuestions[currentQuestion]?.questionName}
                 </Text>
             </View>
-            <InputMethod />
+            {InputMethod()}
         </View>
     );
 }
