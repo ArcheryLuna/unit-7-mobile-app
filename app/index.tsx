@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 
 import CompletedLevels from '../data/completed-levels.json';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowRightLong } from '@fortawesome/pro-regular-svg-icons';
+import { faArrowRightLong, faCalculator } from '@fortawesome/pro-regular-svg-icons';
 
 const RootLayout = () => {
 
@@ -16,7 +16,7 @@ const RootLayout = () => {
         <View className="flex-1 mt-24">
             <Text 
                 className="text-2xl font-bold text-center"
-            >Unit 7 - Mobile Application </Text>
+            >Learn math <FontAwesomeIcon icon={faCalculator}/></Text>
             <View className="px-2 py-6">
                 <Pressable
                     className="bg-blue-500 absolute top-[60px] left-[15px] w-24 h-24 text-center rounded-full"

@@ -255,7 +255,7 @@ const LevelSlug = () => {
             <StyledText className="text-right absolute top-[95px] right-[25px]">Question {Math.min(currentQuestion + 1, levelQuestions.length)} of {levelQuestions.length}</StyledText>
             <StyledText className="text-left absolute top-[95px] left-[25px]">Correct Answers: {correctAnswers}</StyledText>
             <View className="absolute top-[180px]">
-                <Text className="text-3xl px-6 font-semibold">
+                <Text className="text-2xl px-6 font-semibold">
                     {levelQuestions[currentQuestion]?.questionName}
                 </Text>
             </View>
