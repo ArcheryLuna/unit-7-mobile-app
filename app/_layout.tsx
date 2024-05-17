@@ -1,14 +1,35 @@
-import { View, Text, Appearance } from 'react-native';
+import { View, StyleSheet, Text, Appearance } from 'react-native';
 import React from 'react';
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 
-const Layout = () => {
+const RootLayout = () => {
 
     const ColorScheme = Appearance.getColorScheme();
+    
+    console.log(ColorScheme);
 
     return (
-        <Slot />
+        <Stack
+            screenOptions={{
+                headerBackTitle: "Go Back",
+            }}
+        >
+            <Stack.Screen name="index" options={{
+                headerShown: false,
+            }}/>
+
+            <Stack.Screen name="level/[slug]" options={{
+                headerShown: true,
+                headerTitle: "Unit 7 - Level",
+                headerStyle: {
+                    backgroundColor: ColorScheme === "dark" ? "#000" : "#fff",
+                },
+                headerTitleStyle: {
+                    color: ColorScheme === "dark" ? "#fff" : "#000",
+                },
+            }}/>
+        </Stack>
     )
 }
 
-export default Layout;
+export default RootLayout;
