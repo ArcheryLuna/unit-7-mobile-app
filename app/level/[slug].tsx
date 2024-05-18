@@ -177,7 +177,7 @@ const LevelSlug = () => {
             );
         } else if (current.questionType === 3) {
             return (
-                <View className="absolute ios:bottom-80 android:bottom-64 flex-1 flex-row gap-1">
+                <View className="absolute ios:bottom-80 android:bottom-32 flex-1 flex-row gap-1">
                     <TextInput
                         value={selectedAnswer}
                         onChangeText={(text) => setSelectedAnswer(text)}
