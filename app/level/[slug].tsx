@@ -20,6 +20,8 @@ import levelThreeQuestions from '../../data/level-three/questions';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowLeft, faArrowRight, faRightLongToLine } from '@fortawesome/pro-regular-svg-icons';
 
+import { Audio } from 'expo-av';
+
 const LevelSlug = () => {
     const { slug } = useLocalSearchParams();
     const [loading, setLoading] = useState(true);
@@ -36,7 +38,29 @@ const LevelSlug = () => {
 
     const [selectedAnswer, setSelectedAnswer] = useState('');
 
+    const [successSound, setSuccessSound] = useState<Audio.Sound | null>(null);
+    const [failureSound, setFailureSound] = useState<Audio.Sound | null>(null);
+    const [endSound, setEndSound] = useState<Audio.Sound | null>(null);
     const [dummyState, setDummyState] = useState(0); // Dummy state to force re-render for the timer display
+
+    useEffect(() => {
+        const loadSounds = async () => {
+            const { sound: success } = await Audio.Sound.createAsync(
+                require('../../assets/ding.mp3')
+            );
+            const { sound: failure } = await Audio.Sound.createAsync(
+                require('../../assets/buzzer.mp3')
+            );
+            setSuccessSound(success);
+            setFailureSound(failure);
+        };
+        loadSounds();
+
+        return () => {
+            successSound?.unloadAsync();
+            failureSound?.unloadAsync();
+        };
+    }, []);
 
     useEffect(() => {
         switch (slug) {
@@ -71,7 +95,8 @@ const LevelSlug = () => {
     const handleTimeout = useCallback(() => {
         setWrongQuestions((prev) => [...prev, levelQuestions[currentQuestion]]);
         setCurrentQuestion((prev) => prev + 1);
-    }, [currentQuestion, levelQuestions]);
+        failureSound?.replayAsync();
+    }, [currentQuestion, levelQuestions, failureSound]);
 
     useEffect(() => {
         if (hasTimer && currentQuestion < levelQuestions.length) {
@@ -220,15 +245,19 @@ const LevelSlug = () => {
         const current = levelQuestions[currentQuestion];
         if (current.questionType === 1 || current.questionType === 3) {
             if (answer == current.questionAnswer.toString()) {
+                successSound?.replayAsync();
                 setCorrectAnswers((prev) => prev + 1);
             } else {
+                failureSound?.replayAsync();
                 setWrongQuestions((prev) => [...prev, current]);
             }
             setCurrentQuestion((prev) => prev + 1);
         } else if (current.questionType === 2) {
             if ((answer.toLowerCase() == "True".toLowerCase() && current.questionAnswer == 1) || (answer.toLowerCase() == "False".toLowerCase() && current.questionAnswer === 0)) {
+                successSound?.replayAsync();
                 setCorrectAnswers((prev) => prev + 1);
             } else {
+                failureSound?.replayAsync();
                 setWrongQuestions((prev) => [...prev, current]);
             }
             setCurrentQuestion((prev) => prev + 1);
@@ -237,11 +266,11 @@ const LevelSlug = () => {
     }
 
     function Loading() {
-            return (
-                <StyledView className="flex-1 items-center justify-center">
-                    <StyledText>Loading...</StyledText>
-                </StyledView>
-            );
+        return (
+            <StyledView className="flex-1 items-center justify-center">
+                <StyledText>Loading...</StyledText>
+            </StyledView>
+        );
     }
 
     return (
